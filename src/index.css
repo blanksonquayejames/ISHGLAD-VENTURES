@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Receipt print styling is applied dynamically when printing, but keep a small helper style */
+.receipt-print { font-family: "Courier New", monospace; font-size: 12px; }
