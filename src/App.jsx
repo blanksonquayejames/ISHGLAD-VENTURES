@@ -11,6 +11,7 @@ import {
   Search,
   Edit3,
   Trash2,
+  Menu,
 } from 'lucide-react'
 
 const initialInventory = []
@@ -36,6 +37,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [receipt, setReceipt] = useState(null)
   const [toasts, setToasts] = useState([])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mobileCartOpen, setMobileCartOpen] = useState(false)
 
   // Inventory product modal & form state for add/edit/delete
   const [productModalOpen, setProductModalOpen] = useState(false)
@@ -140,6 +143,7 @@ export default function App() {
   const clearSearchAndSetTab = (tab) => {
     setActiveTab(tab)
     setSearchQuery('')
+    setSidebarOpen(false)
   }
 
   const fetchProducts = async () => {
@@ -293,11 +297,17 @@ export default function App() {
 
   return (
     <div className="h-screen flex bg-gray-100 text-gray-900">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-gray-100 p-4 flex flex-col">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold">ISHGLAD VENTURES</h1>
-          <p className="text-xs text-gray-400 mt-1">Desktop Demo</p>
+      <aside className={`fixed md:relative z-30 w-64 bg-gray-900 text-gray-100 p-4 flex flex-col h-full transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold">ISHGLAD VENTURES</h1>
+            <p className="text-xs text-gray-400 mt-1">POS System</p>
+          </div>
+          <button className="md:hidden text-gray-400" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
 
         <nav className="flex-1">
@@ -324,23 +334,32 @@ export default function App() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b bg-white">
-          <div>
-            <h2 className="text-lg font-semibold">{activeTab}</h2>
-            <p className="text-sm text-gray-500">ISHGLAD VENTURES</p>
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b bg-white">
+          <div className="flex items-center gap-3">
+            <button className="md:hidden p-1" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
+            <div>
+              <h2 className="text-base md:text-lg font-semibold">{activeTab}</h2>
+              <p className="text-xs md:text-sm text-gray-500">ISHGLAD VENTURES</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600 flex items-center gap-2">
-              <span className="h-2 w-2 bg-green-500 rounded-full inline-block" /> Terminal Online
+          <div className="flex items-center gap-2 md:gap-4">
+            {activeTab === 'Cash Register' && (
+              <button className="md:hidden relative p-1" onClick={() => setMobileCartOpen(true)}>
+                <ShoppingCart size={20} />
+                {cartItems.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{cartItems.length}</span>}
+              </button>
+            )}
+            <div className="text-xs md:text-sm text-gray-600 flex items-center gap-2">
+              <span className="h-2 w-2 bg-green-500 rounded-full inline-block" /> <span className="hidden sm:inline">Terminal</span> Online
             </div>
           </div>
         </header>
 
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 p-3 md:p-6 overflow-auto main-content-area">
           {activeTab === 'Cash Register' && (
-            <div className="grid grid-cols-12 gap-6">
-              <div className="col-span-9">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+              <div className="md:col-span-9">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="relative flex-1">
                     <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products by name or SKU" className="w-full border rounded px-3 py-2" />
@@ -348,10 +367,10 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {filteredProducts.map((p) => (
-                    <div key={p.id} className={`bg-white p-3 rounded shadow-sm flex flex-col cursor-pointer ${p.stock === 0 ? 'opacity-50 pointer-events-none' : 'hover:shadow-md'}`} onClick={() => addToCart(p)}>
-                      <div className="h-36 mb-3 bg-gray-50 rounded flex items-center justify-center overflow-hidden">
+                    <div key={p.id} className={`bg-white p-2 md:p-3 rounded shadow-sm flex flex-col cursor-pointer ${p.stock === 0 ? 'opacity-50 pointer-events-none' : 'hover:shadow-md'}`} onClick={() => addToCart(p)}>
+                      <div className="h-24 md:h-36 mb-2 md:mb-3 bg-gray-50 rounded flex items-center justify-center overflow-hidden">
                         {getImageUrl(p.image) ? (
                           <img src={getImageUrl(p.image)} alt={p.name} className="object-cover h-full w-full" />
                         ) : (
@@ -373,7 +392,8 @@ export default function App() {
                 </div>
               </div>
 
-              <aside className="col-span-3">
+              {/* Desktop cart */}
+              <aside className="hidden md:block md:col-span-3">
                 <div className="bg-white rounded shadow p-4 sticky top-6">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold">Cart</h3>
@@ -412,23 +432,62 @@ export default function App() {
                   </div>
                 </div>
               </aside>
+
+              {/* Mobile cart overlay */}
+              {mobileCartOpen && (
+                <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileCartOpen(false)}>
+                  <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-lg">Cart</h3>
+                      <button onClick={() => setMobileCartOpen(false)}><X size={20} /></button>
+                    </div>
+                    <div className="space-y-3 max-h-60 overflow-auto mb-4">
+                      {cartItems.length === 0 && <div className="text-sm text-gray-500">Cart is empty</div>}
+                      {cartItems.map((it) => (
+                        <div key={it.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {getImageUrl(it.image) ? (
+                              <img src={getImageUrl(it.image)} alt={it.name} className="w-12 h-12 object-cover rounded" />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 flex items-center justify-center text-xs text-gray-500 rounded">No</div>
+                            )}
+                            <div>
+                              <div className="text-sm font-medium">{it.name}</div>
+                              <div className="text-xs text-gray-500">{currency(it.price)}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => decreaseQty(it.id)} className="p-1 rounded bg-gray-100"><Minus size={14} /></button>
+                            <div className="w-6 text-center">{it.qty}</div>
+                            <button onClick={() => increaseQty(it.id)} className="p-1 rounded bg-gray-100"><Plus size={14} /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="flex items-center justify-between text-lg font-semibold">Total <span>{currency(grandTotal)}</span></div>
+                      <button onClick={() => { checkout(); setMobileCartOpen(false); }} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded mt-3 flex items-center justify-center gap-2"><Check /> Charge</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'Inventory' && (
             <div>
-              <div className="mb-4 flex items-center gap-3">
-                <button onClick={openAddProductModal} className="bg-blue-600 text-white px-3 py-2 rounded flex items-center gap-2">
+              <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                <button onClick={openAddProductModal} className="bg-blue-600 text-white px-3 py-2 rounded flex items-center justify-center gap-2 text-sm">
                   <Plus size={14} /> Add Product
                 </button>
                 <div className="relative flex-1">
-                  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter inventory by name or SKU" className="w-full border rounded px-3 py-2" />
-                  <Search className="absolute right-3 top-2.5 text-gray-400" />
+                  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter inventory by name or SKU" className="w-full border rounded px-3 py-2 text-sm" />
+                  <Search className="absolute right-3 top-2.5 text-gray-400" size={18} />
                 </div>
               </div>
 
-              <div className="bg-white rounded shadow overflow-auto">
-                <table className="w-full table-auto text-left">
+              <div className="bg-white rounded shadow overflow-x-auto">
+                <table className="w-full table-auto text-left text-sm min-w-[600px] md:min-w-0">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3">Item</th>
@@ -479,8 +538,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="bg-white rounded shadow overflow-auto">
-                <table className="w-full table-auto text-left">
+              <div className="bg-white rounded shadow overflow-x-auto">
+                <table className="w-full table-auto text-left text-sm min-w-[500px] md:min-w-0">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3">Order ID</th>
@@ -524,8 +583,8 @@ export default function App() {
 
       {/* Product Add/Edit Modal */}
       {productModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setProductModalOpen(false)}>
-          <div className="bg-white w-96 p-4 rounded shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setProductModalOpen(false)}>
+          <div className="bg-white w-full max-w-sm md:w-96 p-4 rounded shadow-lg max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold mb-2">{productModalMode === 'add' ? 'Add Product' : 'Edit Product'}</h3>
             <div className="space-y-3">
               <div>
@@ -568,8 +627,8 @@ export default function App() {
 
       {/* Receipt Modal */}
       {receipt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onClick={() => setReceipt(null)}>
-          <div className="bg-white w-96 p-4 rounded shadow-lg receipt-print" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4" onClick={() => setReceipt(null)}>
+          <div className="bg-white w-full max-w-sm md:w-96 p-4 rounded shadow-lg receipt-print max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-bold">ISHGLAD VENTURES</h3>
@@ -601,6 +660,21 @@ export default function App() {
           </div>
         </div>
       )}
+      {/* Mobile bottom navigation */}
+      <div className="mobile-bottom-nav">
+        <button className={activeTab === 'Cash Register' ? 'active' : ''} onClick={() => clearSearchAndSetTab('Cash Register')}>
+          <ShoppingCart size={20} />
+          <span>Register</span>
+        </button>
+        <button className={activeTab === 'Inventory' ? 'active' : ''} onClick={() => clearSearchAndSetTab('Inventory')}>
+          <Box size={20} />
+          <span>Inventory</span>
+        </button>
+        <button className={activeTab === 'Sales History' ? 'active' : ''} onClick={() => clearSearchAndSetTab('Sales History')}>
+          <Clock size={20} />
+          <span>Sales</span>
+        </button>
+      </div>
     </div>
   )
 }
